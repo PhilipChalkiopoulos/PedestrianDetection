@@ -58,7 +58,7 @@
 #include "mipi_camera_config.h"
 #include "mipi_bridge_config.h"
 #include "auto_focus.h"
-#include "io.h"
+//#include "io.h"
 #include "camera_func.h"
 
 

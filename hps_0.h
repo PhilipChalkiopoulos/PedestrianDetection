@@ -59,7 +59,7 @@
 #define MIPI_PWDN_N_DO_TEST_BENCH_WIRING 0
 #define MIPI_PWDN_N_DRIVEN_SIM_VALUE 0
 #define MIPI_PWDN_N_EDGE_TYPE NONE
-#define MIPI_PWDN_N_FREQ 100000000
+#define MIPI_PWDN_N_FREQ 50000000
 #define MIPI_PWDN_N_HAS_IN 0
 #define MIPI_PWDN_N_HAS_OUT 1
 #define MIPI_PWDN_N_HAS_TRI 0
@@ -83,7 +83,7 @@
 #define MIPI_RESET_N_DO_TEST_BENCH_WIRING 0
 #define MIPI_RESET_N_DRIVEN_SIM_VALUE 0
 #define MIPI_RESET_N_EDGE_TYPE NONE
-#define MIPI_RESET_N_FREQ 100000000
+#define MIPI_RESET_N_FREQ 50000000
 #define MIPI_RESET_N_HAS_IN 0
 #define MIPI_RESET_N_HAS_OUT 1
 #define MIPI_RESET_N_HAS_TRI 0
@@ -112,7 +112,7 @@
 #define SYSID_QSYS_SPAN 8
 #define SYSID_QSYS_END 0x10007
 #define SYSID_QSYS_ID 2899645186
-#define SYSID_QSYS_TIMESTAMP 1524494461
+#define SYSID_QSYS_TIMESTAMP 1525960956
 
 /*
  * Macros for device 'led', class 'altera_avalon_pio'
@@ -189,6 +189,17 @@
 #define KEY_RESET_VALUE 0
 
 /*
+ * Macros for device 'alt_vip_cl_mixer_0', class 'alt_vip_cl_mixer'
+ * The macros are prefixed with 'ALT_VIP_CL_MIXER_0_'.
+ * The prefix is the slave descriptor.
+ */
+#define ALT_VIP_CL_MIXER_0_COMPONENT_TYPE alt_vip_cl_mixer
+#define ALT_VIP_CL_MIXER_0_COMPONENT_NAME alt_vip_cl_mixer_0
+#define ALT_VIP_CL_MIXER_0_BASE 0x10100
+#define ALT_VIP_CL_MIXER_0_SPAN 256
+#define ALT_VIP_CL_MIXER_0_END 0x101ff
+
+/*
  * Macros for device 'jtag_uart', class 'altera_avalon_jtag_uart'
  * The macros are prefixed with 'JTAG_UART_'.
  * The prefix is the slave descriptor.
@@ -230,7 +241,7 @@
 #define SDRAM_SDRAM_NUM_CHIPSELECTS 1
 #define SDRAM_SDRAM_ROW_WIDTH 13
 #define SDRAM_SHARED_DATA 0
-#define SDRAM_SIM_MODEL_BASE 1
+#define SDRAM_SIM_MODEL_BASE 0
 #define SDRAM_STARVATION_INDICATOR 0
 #define SDRAM_TRISTATE_BRIDGE_SLAVE ""
 #define SDRAM_T_AC 5.5

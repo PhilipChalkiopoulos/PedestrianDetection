@@ -49,6 +49,10 @@ void *h2p_lw_frame_reader;
 #define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
 
 
+#define IORD(base, index)			(*( ((uint32_t *)base)+index))
+#define IOWR(base, index, data)     (*(((uint32_t *)base)+index) = data)
+
+
 uint32_t calc_lw_address(uint32_t base_address){
 	return ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + base_address ) & ( unsigned long)( HW_REGS_MASK ) );
 	//h2p_lw_mix_addr=virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + ALT_VIP_MIX_0_BASE ) & ( unsigned long)( HW_REGS_MASK ) );
@@ -75,7 +79,7 @@ volatile int *sdram_data;
 
 
 
-uint32_t mix_data;
+uint16_t mix_data;
 uint32_t led_data = 0x0;
 
 /** @function main */
@@ -107,7 +111,7 @@ int main( int argc, const char** argv)
 	h2p_lw_mipi_rest_n	= virtual_base + calc_lw_address(MIPI_RESET_N_BASE);
 	h2p_lw_mipi_camera	= virtual_base + calc_lw_address(I2C_OPENCORES_CAMERA_BASE);
 	h2p_lw_mipi_contrlr	= virtual_base + calc_lw_address(I2C_OPENCORES_MIPI_BASE);
-	//h2p_lw_mix_addr		= virtual_base + calc_lw_address(ALT_VIP_CL_MIXER_0_BASE);
+	h2p_lw_mix_addr		= virtual_base + calc_lw_address(ALT_VIP_CL_MIXER_0_BASE);
 	//h2p_lw_auto_focus	= virtual_base + calc_lw_address(TERASIC_AUTO_FOCUS_0_BASE);
 	//h2p_lw_frame_reader = virtual_base + calc_lw_address(ALT_VIP_VFR_0_BASE);
 	//h2p_lw_pio_reset_n	= virtual_base + calc_lw_address(PIO_RESET_BASE);
@@ -115,11 +119,50 @@ int main( int argc, const char** argv)
 	printf("the address of  LW + Led Base is: 0x%x \n", calc_lw_address(LED_BASE));
 	printf("the address of virtual + LW + Led Base is: 0x%x \n", h2p_lw_mipi_contrlr);
 
-	IOWR(h2p_lw_led_addr,int(0),int(0x3ff));
-	printf("\nLED_data: 0x%x\n",led_data);
+	IOWR(h2p_lw_led_addr,int(0),int(0x3f2));
+	printf("\nLED_data: 0x%x\n",IORD(h2p_lw_mix_addr,int(0)));
 
+	int mi=0;
+	for (mi=0;mi<25;mi++){
+		printf("Mixer II %d Register: 0x%x \n",mi,IORD(h2p_lw_mix_addr,mi));
+	}
+
+
+	usleep(20);
+	IOWR(h2p_lw_mix_addr,0,int(0x01));
+	usleep(20);
+
+	IOWR(h2p_lw_mix_addr,8,0);
+	usleep(20);
+	IOWR(h2p_lw_mix_addr,9,0);
+	usleep(20);
+
+	IOWR(h2p_lw_mix_addr,10,1);
+	usleep(20);
+
+	IOWR(h2p_lw_mix_addr,13,0);
+	usleep(20);
+	IOWR(h2p_lw_mix_addr,14,0);
+	usleep(20);
+
+	IOWR(h2p_lw_mix_addr,15,1);
+	usleep(20);
+
+	IOWR(h2p_lw_mix_addr,18,0);
+	usleep(20);
+	IOWR(h2p_lw_mix_addr,19,0);
+	usleep(20);
+
+	IOWR(h2p_lw_mix_addr,20,1);
+	usleep(20);
+
+	for (mi=0;mi<25;mi++){
+		IOWR(h2p_lw_mix_addr,mi,1);
+		printf("Mixer II %d Register: 0x%x \n",mi,IORD(h2p_lw_mix_addr,mi));
+	}
 
 	printf("DE1-SoC D8M VGA Demo\n");
+
 
 	IOWR(h2p_lw_mipi_pwdn_n, 0x00, 0x00);
 	IOWR(h2p_lw_mipi_rest_n, 0x00, 0x00);
@@ -195,6 +238,7 @@ int main( int argc, const char** argv)
 
 
 	//-----------------------------------------------15-04-18---------------------------
+
 	//-----------------------------------------------30-04-18---------------------------
 	if (munmap (virtual_base, HW_REGS_SPAN) != 0)
 	{
