@@ -21,6 +21,39 @@
  */
 
 /*
+ * Macros for device 'onchip_memory', class 'altera_avalon_onchip_memory2'
+ * The macros are prefixed with 'ONCHIP_MEMORY_'.
+ * The prefix is the slave descriptor.
+ */
+#define ONCHIP_MEMORY_COMPONENT_TYPE altera_avalon_onchip_memory2
+#define ONCHIP_MEMORY_COMPONENT_NAME onchip_memory
+#define ONCHIP_MEMORY_BASE 0x0
+#define ONCHIP_MEMORY_SPAN 262144
+#define ONCHIP_MEMORY_END 0x3ffff
+#define ONCHIP_MEMORY_ALLOW_IN_SYSTEM_MEMORY_CONTENT_EDITOR 0
+#define ONCHIP_MEMORY_ALLOW_MRAM_SIM_CONTENTS_ONLY_FILE 0
+#define ONCHIP_MEMORY_CONTENTS_INFO ""
+#define ONCHIP_MEMORY_DUAL_PORT 1
+#define ONCHIP_MEMORY_GUI_RAM_BLOCK_TYPE AUTO
+#define ONCHIP_MEMORY_INIT_CONTENTS_FILE soc_system_onchip_memory
+#define ONCHIP_MEMORY_INIT_MEM_CONTENT 1
+#define ONCHIP_MEMORY_INSTANCE_ID NONE
+#define ONCHIP_MEMORY_NON_DEFAULT_INIT_FILE_ENABLED 0
+#define ONCHIP_MEMORY_RAM_BLOCK_TYPE AUTO
+#define ONCHIP_MEMORY_READ_DURING_WRITE_MODE DONT_CARE
+#define ONCHIP_MEMORY_SINGLE_CLOCK_OP 1
+#define ONCHIP_MEMORY_SIZE_MULTIPLE 1
+#define ONCHIP_MEMORY_SIZE_VALUE 262144
+#define ONCHIP_MEMORY_WRITABLE 1
+#define ONCHIP_MEMORY_MEMORY_INFO_DAT_SYM_INSTALL_DIR SIM_DIR
+#define ONCHIP_MEMORY_MEMORY_INFO_GENERATE_DAT_SYM 1
+#define ONCHIP_MEMORY_MEMORY_INFO_GENERATE_HEX 1
+#define ONCHIP_MEMORY_MEMORY_INFO_HAS_BYTE_LANE 0
+#define ONCHIP_MEMORY_MEMORY_INFO_HEX_INSTALL_DIR QPF_DIR
+#define ONCHIP_MEMORY_MEMORY_INFO_MEM_INIT_DATA_WIDTH 32
+#define ONCHIP_MEMORY_MEMORY_INFO_MEM_INIT_FILENAME soc_system_onchip_memory
+
+/*
  * Macros for device 'i2c_opencores_camera', class 'i2c_opencores'
  * The macros are prefixed with 'I2C_OPENCORES_CAMERA_'.
  * The prefix is the slave descriptor.
@@ -91,6 +124,28 @@
 #define MIPI_RESET_N_RESET_VALUE 0
 
 /*
+ * Macros for device 'alt_vip_cl_clp_1', class 'alt_vip_cl_clp'
+ * The macros are prefixed with 'ALT_VIP_CL_CLP_1_'.
+ * The prefix is the slave descriptor.
+ */
+#define ALT_VIP_CL_CLP_1_COMPONENT_TYPE alt_vip_cl_clp
+#define ALT_VIP_CL_CLP_1_COMPONENT_NAME alt_vip_cl_clp_1
+#define ALT_VIP_CL_CLP_1_BASE 0x60
+#define ALT_VIP_CL_CLP_1_SPAN 32
+#define ALT_VIP_CL_CLP_1_END 0x7f
+
+/*
+ * Macros for device 'video_dma_controller_0', class 'altera_up_avalon_video_dma_controller'
+ * The macros are prefixed with 'VIDEO_DMA_CONTROLLER_0_'.
+ * The prefix is the slave descriptor.
+ */
+#define VIDEO_DMA_CONTROLLER_0_COMPONENT_TYPE altera_up_avalon_video_dma_controller
+#define VIDEO_DMA_CONTROLLER_0_COMPONENT_NAME video_dma_controller_0
+#define VIDEO_DMA_CONTROLLER_0_BASE 0x80
+#define VIDEO_DMA_CONTROLLER_0_SPAN 16
+#define VIDEO_DMA_CONTROLLER_0_END 0x8f
+
+/*
  * Macros for device 'alt_vip_vfr_vga', class 'alt_vip_vfr'
  * The macros are prefixed with 'ALT_VIP_VFR_VGA_'.
  * The prefix is the slave descriptor.
@@ -100,6 +155,17 @@
 #define ALT_VIP_VFR_VGA_BASE 0x100
 #define ALT_VIP_VFR_VGA_SPAN 512
 #define ALT_VIP_VFR_VGA_END 0x2ff
+
+/*
+ * Macros for device 'alt_vip_mix_0', class 'alt_vip_mix'
+ * The macros are prefixed with 'ALT_VIP_MIX_0_'.
+ * The prefix is the slave descriptor.
+ */
+#define ALT_VIP_MIX_0_COMPONENT_TYPE alt_vip_mix
+#define ALT_VIP_MIX_0_COMPONENT_NAME alt_vip_mix_0
+#define ALT_VIP_MIX_0_BASE 0x200
+#define ALT_VIP_MIX_0_SPAN 1024
+#define ALT_VIP_MIX_0_END 0x5ff
 
 /*
  * Macros for device 'sysid_qsys', class 'altera_avalon_sysid_qsys'
@@ -112,7 +178,7 @@
 #define SYSID_QSYS_SPAN 8
 #define SYSID_QSYS_END 0x10007
 #define SYSID_QSYS_ID 2899645186
-#define SYSID_QSYS_TIMESTAMP 1525960956
+#define SYSID_QSYS_TIMESTAMP 1527691671
 
 /*
  * Macros for device 'led', class 'altera_avalon_pio'
@@ -187,17 +253,6 @@
 #define KEY_HAS_TRI 0
 #define KEY_IRQ_TYPE EDGE
 #define KEY_RESET_VALUE 0
-
-/*
- * Macros for device 'alt_vip_cl_mixer_0', class 'alt_vip_cl_mixer'
- * The macros are prefixed with 'ALT_VIP_CL_MIXER_0_'.
- * The prefix is the slave descriptor.
- */
-#define ALT_VIP_CL_MIXER_0_COMPONENT_TYPE alt_vip_cl_mixer
-#define ALT_VIP_CL_MIXER_0_COMPONENT_NAME alt_vip_cl_mixer_0
-#define ALT_VIP_CL_MIXER_0_BASE 0x10100
-#define ALT_VIP_CL_MIXER_0_SPAN 256
-#define ALT_VIP_CL_MIXER_0_END 0x101ff
 
 /*
  * Macros for device 'jtag_uart', class 'altera_avalon_jtag_uart'
