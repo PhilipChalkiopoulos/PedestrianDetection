@@ -8,6 +8,11 @@
 
 #include "fbdraw.h"
 #include "hps_0.h"
+#include <stdio.h>
+
+
+using namespace std;
+using namespace cv;
 
 // located in /embedded/ip/altera/hps/altera_hps/hwlibs/include/soc_cv_av/socal
 // in hps.h we can find the variables for the offset addresses of Lightweight and normal axi bus
@@ -29,7 +34,8 @@ void *h2p_lw_mipi_contrlr;
 
 void *virtual_base;
 int fd;
-int i,j,k,sdata;
+int a,i,j,k,sdata;
+long l,o;
 int loop_count;
 int led_direction;
 int led_mask;
@@ -53,6 +59,39 @@ void *h2p_lw_dma_control;
 
 #define IORD(base, index)			(*( ((uint32_t *)base)+index))
 #define IOWR(base, index, data)     (*(((uint32_t *)base)+index) = data)
+
+
+
+
+/** Function Headers */
+void detectAndDisplay( Mat frame,dev_fb fb );
+
+
+/** Global variables */
+String face_cascade_name, eyes_cascade_name;
+
+
+const String wndName = "Pedestrian Detection Demo";
+const String wndName1 = "Pedestrian Detection Demo 1";
+const double scale = 1.05;
+const int nlevels = 13;
+const int gr_threshold = 2;
+
+const double hit_threshold = 1.1;
+const bool gamma_corr = false;
+
+const Size win_size(64, 128);
+const Size win_stride(8, 8);
+
+int framecount = 0;
+
+String people_cascade_name;
+//CascadeClassifier people_cascade("../opencv/data/haarcascades/haarcascade_fullbody.xml");
+
+cv::HOGDescriptor hog;
+
+//Mat img(Size(320,240),CV_8UC1);
+
 
 
 uint32_t calc_lw_address(uint32_t base_address){
@@ -90,6 +129,11 @@ int main( int argc, const char** argv)
 {
 	dev_fb fb;
 	fb_init(&fb);
+
+	hog.setSVMDetector(hog.getDefaultPeopleDetector());
+	printf("hog detector was set...");
+
+	printf("hog descriptor block size: %dx%d \n",hog.blockStride.height, hog.blockStride.width);
 	reg1 = 0;
 	// map the address space for the LED registers into user space so we can interact with them.
 	// we'll actually map in the entire CSR span of the HPS since we want to access various registers within that span
@@ -190,6 +234,7 @@ int main( int argc, const char** argv)
 		printf("MIPI_Init Init failed!\r\n");
 	}else{
 		printf("MIPI_Init Init successfully!\r\n");
+		MIPI_BIN_LEVEL(3);
 	}
 
 	IOWR(h2p_lw_clp_addr,int(0),int(0x01));
@@ -239,29 +284,114 @@ int main( int argc, const char** argv)
 	printf("the address of AXI Bridge is: 0x%x \n", h2f_axi_master);
 	printf("the address of AXI Bridge + SDRAM Base is: 0x%x \n", h2f_axi_master + ONCHIP_MEMORY_BASE);
 
-	sdram_data	= (int*)(h2f_axi_master + ONCHIP_MEMORY_BASE);
+	uchar image_array[320*240];
+	Mat img = Mat(240, 320, CV_8UC1, &image_array);
+	printf( "Mat Array initialized...\n" );
 
+	sdram_data	= (int*)(h2f_axi_master + ONCHIP_MEMORY_BASE);
+	char pixel1,pixel2,pixel3,pixel4;
+
+for (a=0;a<300;a++){
 	for (j=0; j<240; j++){
-		long l=j*80;
+		l=j*80;
+		o = j*320;
 		for(i=0; i<320; i+=4){
 			int m = i/4;
 			//mix_data = *(sdram_data+i+j);//*(((uint32_t *)sdram_data)+i+j);
 			temp2 = *(sdram_data+m+l);
-			fb_drawPixel(&fb,i,j,(int(temp2 & 0xff)),(int(temp2 & 0xff)),(int(temp2 & 0xff)));
-			fb_drawPixel(&fb,i+1,j,(int((temp2>>8) & 0xff)),(int((temp2>>8) & 0xff)),(int((temp2>>8) & 0xff)));
-			fb_drawPixel(&fb,i+2,j,(int((temp2>>16) & 0xff)),(int((temp2>>16) & 0xff)),(int((temp2>>16) & 0xff)));
-			fb_drawPixel(&fb,i+3,j,(int((temp2>>24) & 0xff)),(int((temp2>>24) & 0xff)),(int((temp2>>24) & 0xff)));
+			pixel1= uchar(temp2 & 0xff);
+			pixel2= uchar((temp2>>8) & 0xff);
+			pixel3= uchar((temp2>>16) & 0xff);
+			pixel4= uchar((temp2>>24) & 0xff);
+
+			/*fb_drawPixel(&fb,i,j,pixel1,pixel1,pixel1);
+			fb_drawPixel(&fb,i+1,j,pixel2,pixel2,pixel2);
+			fb_drawPixel(&fb,i+2,j,pixel3,pixel3,pixel3);
+			fb_drawPixel(&fb,i+3,j,pixel4,pixel4,pixel4);
+*/
+			image_array[i+o]=pixel1;
+			image_array[i+1+o]=pixel2;
+			image_array[i+2+o]=pixel3;
+			image_array[i+3+o]=pixel4;
 		}
 	}
-	printf("the last of data: 0x%x -> 0x%x  0x%x  0x%x  0x%x \n",(temp2), ((temp2) & 0xff), ((temp2>>8) & 0xff) ,((temp2>>16) & 0xff), ((temp2>>24) & 0xff));
-	printf("the address of onchip ram: 0x%x \n", sdram_data);
-	printf( "Draw everything\n" );
-	fb_close(&fb);
 
 
 	//-----------------------------------------------15-04-18---------------------------
 
+	//-----------------------------------------------30-05-18---------------------------
+
+/*
+	usleep(5000000);
+	printf("\nThe 500th data of image array %d\n",image_array[500]);
+	printf("\nThe size of image array %d\n",sizeof(image_array));
+
+	uchar gray;
+	for( i = 0; i < 240; ++i)
+		{
+		o = i*320;
+			for ( j = 0; j < 320; j++)
+			{
+				gray=image_array[o+j];
+
+				//printf("[%d][%d],%d,%d,%d\n",y,x,point,point+1,point+2);
+				fb_drawPixel(&fb,i,j,gray,gray,gray);
+			}
+	}*/
+
+
+	//memcpy(img.data,&image_array,sizeof(image_array));
+
+//	printf("\nThe addresses for images %d %d\n",image_array,img.data);
+
+/*	int channels = img.channels();
+
+	int nRows = img.rows;
+	int nCols = img.cols * channels;*/
+/*
+
+	printf("\nrows and columns of the image array: %d  -- %d \n",nRows,nCols);
+	printf("\nchannels of the image array: %d \n",channels);
+
+*/
+	//p = inputImage.ptr<uchar>(0);
+	//p = img.ptr<uchar>(r);
+
+//	usleep(5000000);
+/*
+
+	for( i = 0; i < nRows; ++i)
+	{
+		o = i*nCols;
+		for ( j = 0; j < nCols; j++)
+		{
+
+			gray = img.at<uchar>(o+j);
+
+			//printf("[%d][%d],%d,%d,%d\n",y,x,point,point+1,point+2);
+			fb_drawPixel(&fb,j,i,gray,gray,gray);
+		}
+	}
+
+*/
+//	printf("\nThe 50th data of img mat %d\n",img.at<char>(500));
+	//-----------------------------------------------30-05-18---------------------------
+
+
+	//-----------------------------------------------01-06-18---------------------------
+
+    //hog.setSVMDetector(hog.getDefaultPeopleDetector());
+
+ //   printf("hog detector was set...");
+
+    detectAndDisplay(img, fb);
+}
+	//-----------------------------------------------01-06-18---------------------------
+
+
 	//-----------------------------------------------30-04-18---------------------------
+
+	fb_close(&fb);
 	if (munmap (virtual_base, HW_REGS_SPAN) != 0)
 	{
 		printf ("ERROR: munmap() failed...\n");
@@ -277,6 +407,80 @@ int main( int argc, const char** argv)
 
 	//-----------------------------------------------30-04-18---------------------------
     return 0;
+}
+
+
+void detectAndDisplay( Mat frame_gray, dev_fb fb )
+{
+
+    std::vector<Rect> rects;
+    Mat frame;
+    /*
+    dev_fb fb;
+    fb_init(&fb);
+    */
+
+    //GammaCorrection(frame,frame,5);
+
+    //cvtColor( frame, frame_gray, COLOR_BGR2GRAY );
+
+    //equalizeHist( frame_gray, frame_gray );
+    //cvtColor(frame_gray,frame,COLOR_GRAY2BGR);
+    cvtColor(frame_gray,frame,COLOR_GRAY2BGR);
+
+    // Calculating for HOG --- test processing
+    //Mat gx, gy;
+    //Sobel(frame_gray, gx, CV_8U, 1, 0, 1);
+    //Sobel(frame_gray, gy, CV_8U, 0, 1, 1);
+
+
+    //Sobel(frame, gx, CV_32F, 1, 0, 1);
+    //Sobel(frame, gy, CV_32F, 0, 1, 1);
+    //Sobel(frame[][], gx, CV_32F, 1, 0, 1);
+    //Sobel(frame, gy, CV_32F, 0, 1, 1);
+
+    //Mat mag, angle;
+    //cartToPolar(gx, gy, mag, angle, 1);
+
+    //cout << "Gx size array: " <<  gx.size() << "   Gy Size Array: " << gy.size() << endl;
+
+    //cout << "Magnitude size array: " <<  mag.size() << "Angle Size Array: " << angle.size() << endl;
+
+    //people_cascade.detectMultiScale( frame_gray, rects, 1.1, 3, 0|CASCADE_SCALE_IMAGE, Size(60, 30) );
+
+    hog.detectMultiScale(frame_gray, rects, hit_threshold, win_stride, Size(0, 0), scale, gr_threshold);
+    //cout << "Frame: " << framecount++<< "     Person Detected: " << rects.size() << endl;
+
+    for (size_t i = 0; i < rects.size(); i++){
+    	rectangle(frame, rects[i], CV_RGB(0, 255, 0), 1);
+    	//printf("rect data: x: %d, y: %d, height: %d, width:%d\n", rects[i].x, rects[i].y, rects[i].height, rects[i].width);
+    }
+    int channels = frame.channels();
+
+    printf("\nnumber of people detected: %d\n", rects.size());
+
+    int nRows = frame.rows;
+	int nCols = frame.cols * channels;
+    int i,j,point,x,y;
+	uchar r,g,b;
+	//uchar* p;
+	//p = inputImage.ptr<uchar>(0);
+	//p = frame.ptr<uchar>(r,g,b);
+	for( i = 0; i < nRows; ++i)
+	{
+		for ( j = 0; j < nCols; j=j+3)
+		{
+			x = i ;
+			y = j/3 ;
+
+			r = frame.at<char>(i,j);
+			g = frame.at<char>(i,j+1);
+			b = frame.at<char>(i,j+2);
+			//printf("[%d][%d],%d,%d,%d\n",y,x,point,point+1,point+2);
+			fb_drawPixel(&fb,y,x,b,g,r);
+		}
+	}
+	//printf( "Draw everything\n" );
 }
 
 
