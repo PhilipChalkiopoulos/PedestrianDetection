@@ -36,6 +36,7 @@ typedef struct pixel_t
 
 	void fb_drawPixelPx(dev_fb* fb, pixel px, char r, char g, char b);
 	void fb_drawPixel(dev_fb* fb, int x, int y, char r, char g, char b);
+	void fb_drawPixelwithAlpha(dev_fb* fb, int x, int y, char r, char g, char b, char a);
 	void fb_fillScr(dev_fb* fb, char r, char g, char b);
 
 	void fb_drawBox(dev_fb* fb, pixel px, int w, int h, char r, char g, char b);
