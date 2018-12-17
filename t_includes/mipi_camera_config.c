@@ -240,12 +240,12 @@ static SZ_CONFIG_T MipiCameraReg[] = {
 	     {0x6c,0x3811, 0x04}, // ISP X win L
 	     {0x6c,0x3813, 0x02}, // ISP Y win L
 
-	     {0x6c,0x3814, 0x01}, // X inc odd
-	     {0x6c,0x3815, 0x01}, // X inc even
+	     {0x6c,0x3814, 0x04}, // X inc odd
+	     {0x6c,0x3815, 0x04}, // X inc even
 	     {0x6c,0x3820, 0x06}, // flip on
-	     {0x6c,0x3821, 0x70}, // hsync_en_o, fst_vbin, mirror on
-	     {0x6c,0x382a, 0x01}, // Y inc odd
-	     {0x6c,0x382b, 0x01}, // Y inc even
+	     {0x6c,0x3821, 0xf0}, // hsync_en_o, fst_vbin, mirror on
+	     {0x6c,0x382a, 0x04}, // Y inc odd
+	     {0x6c,0x382b, 0x04}, // Y inc even
 	     {0x6c,0x3830, 8}, // ablc_use_num[5:1]
 	     {0x6c,0x3836, 2}, // zline_use_num[5:1]
 	     {0x6c,0x3837, 0x18}, // vts_add_dis, cexp_gt_vts_offs=8
@@ -519,29 +519,29 @@ void MIPI_BIN_LEVEL(alt_u8 level){
 		OV8865_write_cmos_sensor_8(0x3836, 2);
 	}
     usleep(10000);
-	OV8865_write_cmos_sensor_8(0x0100, 0x01); // wake up, streaming
+	OV8865_write_cmos_sensor_8(0x0100, 0x01);
 
 	oc_i2c_uninit(h2p_lw_mipi_camera);  // Release I2C bus , due to two I2C master shared!
 
 }
-
-
-void BLC_LEVEL(alt_u8 blc0,alt_u8 blc1){
-	if(blc0 < 1) blc0 = 0;
-	if(blc0 >= 31) blc0 = 31;
-
-	if(blc1 < 1) blc1 = 0;
-	if(blc1 >= 31) blc1 = 31;
-
-        printf("BLC0 %d ,BLC1 %d \n",blc0,blc1);
-        OV8865_write_cmos_sensor_8(0x0100, 0x00);
-
-		OV8865_write_cmos_sensor_8(0x3830, blc0);
-		OV8865_write_cmos_sensor_8(0x3836, blc1);
-
-	    usleep(10000);
-		OV8865_write_cmos_sensor_8(0x0100, 0x01);// wake up, streaming
-}
+//
+//
+//void BLC_LEVEL(alt_u8 blc0,alt_u8 blc1){
+//	if(blc0 < 1) blc0 = 0;
+//	if(blc0 >= 31) blc0 = 31;
+//
+//	if(blc1 < 1) blc1 = 0;
+//	if(blc1 >= 31) blc1 = 31;
+//
+//        printf("BLC0 %d ,BLC1 %d \n",blc0,blc1);
+//        OV8865_write_cmos_sensor_8(0x0100, 0x00);
+//
+//		OV8865_write_cmos_sensor_8(0x3830, blc0);
+//		OV8865_write_cmos_sensor_8(0x3836, blc1);
+//
+//	    usleep(10000);
+//		OV8865_write_cmos_sensor_8(0x0100, 0x01);
+//}
 
 
 void MipiCameraInit(void)

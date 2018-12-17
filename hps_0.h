@@ -146,17 +146,6 @@
 #define VIDEO_DMA_CONTROLLER_0_END 0x8f
 
 /*
- * Macros for device 'video_dma_controller_1', class 'altera_up_avalon_video_dma_controller'
- * The macros are prefixed with 'VIDEO_DMA_CONTROLLER_1_'.
- * The prefix is the slave descriptor.
- */
-#define VIDEO_DMA_CONTROLLER_1_COMPONENT_TYPE altera_up_avalon_video_dma_controller
-#define VIDEO_DMA_CONTROLLER_1_COMPONENT_NAME video_dma_controller_1
-#define VIDEO_DMA_CONTROLLER_1_BASE 0x90
-#define VIDEO_DMA_CONTROLLER_1_SPAN 16
-#define VIDEO_DMA_CONTROLLER_1_END 0x9f
-
-/*
  * Macros for device 'alt_vip_vfr_vga', class 'alt_vip_vfr'
  * The macros are prefixed with 'ALT_VIP_VFR_VGA_'.
  * The prefix is the slave descriptor.
@@ -189,7 +178,7 @@
 #define SYSID_QSYS_SPAN 8
 #define SYSID_QSYS_END 0x10007
 #define SYSID_QSYS_ID 2899645186
-#define SYSID_QSYS_TIMESTAMP 1528723323
+#define SYSID_QSYS_TIMESTAMP 1527691671
 
 /*
  * Macros for device 'led', class 'altera_avalon_pio'
