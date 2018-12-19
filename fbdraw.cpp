@@ -69,7 +69,25 @@ void fb_drawPixel(dev_fb* fb, int x, int y, char r, char g, char b)
 	}
 }
 
-
+void fb_drawPixelwithAlpha(dev_fb* fb, int x, int y, char r, char g, char b, char a)
+{
+	long int location=locate(fb,x,y);
+	if(fb_checkPx(fb, x,y))
+	{
+		if(fb->vinfo.bits_per_pixel==32)
+		{
+			*(fb->fbp+location)=b;
+			*(fb->fbp+location+1)=g;
+			*(fb->fbp+location+2)=r;
+			*(fb->fbp+location+3)=a;
+		}
+		else
+		{
+			unsigned short int t = r<<11 | g << 5 | b;
+			*((unsigned short int*)(fb->fbp + location)) = t;
+		}
+	}
+}
 
 void fb_fillScr(dev_fb* fb, char r, char g, char b)
 {
