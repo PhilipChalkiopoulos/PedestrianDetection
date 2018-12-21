@@ -22,7 +22,7 @@ void mipi_clear_error(void){
 
 void mipi_show_error_info(void){
 
-		alt_u16 PHY_status, SCI_status, MDLSynErr, FrmErrCnt, MDLErrCnt;
+	alt_u16 PHY_status, SCI_status, MDLSynErr, FrmErrCnt, MDLErrCnt;
 
 	PHY_status = MipiBridgeRegRead(MIPI_REG_PHYSta);
 	SCI_status = MipiBridgeRegRead(MIPI_REG_CSIStatus);
@@ -63,24 +63,9 @@ int MIPI_Init(){
 
     usleep(500*1000);
 
-//	bSuccess = oc_i2c_init_ex(h2p_lw_mipi_camera, 50*1000*1000,400*1000); //I2C: 400K
-//	if (!bSuccess)
-//		printf("failed to init MIPI- Camera i2c\r\n");
-
     MipiCameraInit();
-//    MIPI_BIN_LEVEL(DEFAULT_LEVEL);
-
-
-//    OV8865_FOCUS_Move_to(340);
-
-//    oc_i2c_uninit(h2p_lw_mipi_camera);  // Release I2C bus , due to two I2C master shared!
-
 
  	usleep(1000);
-
-
-	//int *h2p_lw_mipi_camera1 = (int*)malloc(int(h2p_lw_mipi_camera) * sizeof(int));
-
 
     oc_i2c_uninit(h2p_lw_mipi_contrlr);
 

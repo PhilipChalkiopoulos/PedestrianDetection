@@ -10,7 +10,7 @@
 #include "terasic_includes.h"
 #include "../hps_0.h"
 #include "mipi_camera_config.h"
-#include "auto_focus.h"
+
 
 
 
@@ -32,12 +32,12 @@ typedef struct{
 
 static SZ_CONFIG_T MipiCameraReg[] = {
 	     {0x6c,0x0103, 0x01}, // software reset
-	  		{TIME_DELAY, 0, 10},
+	     {TIME_DELAY, 0, 10},
 	     {0x6c,0x0100, 0x00}, // software standby
 	     {0x6c,0x0100, 0x00}, // software standby
 	     {0x6c,0x0100, 0x00}, // software standby
 	     {0x6c,0x0100, 0x00}, // software standby
-	  		{TIME_DELAY, 0, 10},
+	     {TIME_DELAY, 0, 10},
 
 	     {0x6c,0x3638, 0xff}, // analog control
   // 25MHz MCLK input
@@ -448,7 +448,6 @@ void OV8865_FOCUS_Move_to(alt_u16 a_u2MovePosition)
   if (a_u2MovePosition < 0)     {a_u2MovePosition = 0;}
   int bSuccess;
 
-  Focus_Released(); // waiting for VCM release I2C bus
 
 	bSuccess = oc_i2c_init_ex(h2p_lw_mipi_camera, 50*1000*1000,400*1000); //I2C: 400K
 	if (!bSuccess)
@@ -476,13 +475,11 @@ void MIPI_BIN_LEVEL(alt_u8 level){
 	if(level <= 1) level = 1;
 	if(level >= 3) level = 3;
 
-	  //Focus_Released(); // waiting for VCM release I2C bus
 	usleep(1000*1000); //1sec
 	
-	  int bSuccess;
-		bSuccess = oc_i2c_init_ex(h2p_lw_mipi_camera, 50*1000*1000,400*1000); //I2C: 400K
-		if (!bSuccess)
-			printf("failed to init MIPI- Camera i2c\r\n");
+	int bSuccess;
+	bSuccess = oc_i2c_init_ex(h2p_lw_mipi_camera, 50*1000*1000,400*1000); //I2C: 400K
+	if (!bSuccess) printf("failed to init MIPI- Camera i2c\r\n");
 
 
 	OV8865_write_cmos_sensor_8(0x0100, 0x00);
@@ -550,49 +547,32 @@ void MipiCameraInit(void)
     int i, num;
     int bSuccess;
 
-    Focus_Released(); // waiting for VCM release I2C bus
+	bSuccess = oc_i2c_init_ex((int)h2p_lw_mipi_camera, 50*1000*1000,400*1000); //I2C: 400K
+	if (!bSuccess) printf("failed to init MIPI- Camera i2c\r\n");
 
+	OV8865DB("\nbase address of camera module :");
+	OV8865DB(h2p_lw_mipi_camera);
 
-		bSuccess = oc_i2c_init_ex((int)h2p_lw_mipi_camera, 50*1000*1000,400*1000); //I2C: 400K
-		if (!bSuccess)
-			printf("failed to init MIPI- Camera i2c\r\n");
+	OV8865DB("\nStart MipiCameraInit -OV8865!\r\n");
+	OV8865DB("Write Read Test!\n");
 
-//  searching for active I2C address.
-//    int ii;
-//    for(ii= 0; ii<256;ii++){
-//    	printf("%x:  ",ii);
-//    	alt_u8 data = 0x30;
-//        OC_I2C_Write(h2p_lw_mipi_camera, ii, 0x30,  (alt_u8 *)&data, 1);
-//        usleep(10000);
-//    }
-//
-		OV8865DB("\nbase address of camera module :");
-			OV8865DB(h2p_lw_mipi_camera);
+	for(i=0;i<10;i++){
+		OV8865_write_cmos_sensor_8(0x3809,i);
+		usleep(100);
+		printf("%d (%d)\n",OV8865_read_cmos_sensor_8(0x3809),i);
+		usleep(100);
+	}
 
-	 OV8865DB("\nStart MipiCameraInit -OV8865!\r\n");
-	 OV8865DB("Write Read Test!\n");
+	num = sizeof(MipiCameraReg)/sizeof(MipiCameraReg[0]);
+	for(i=0;i<num;i++){
+		if (MipiCameraReg[i].Type == TIME_DELAY)   usleep(MipiCameraReg[i].Data*100);
+    	else if(MipiCameraReg[i].Type == END_OF_SCRIPT)   break;
+    	else if(MipiCameraReg[i].Type == 0x6c)   OV8865_write_cmos_sensor_8(MipiCameraReg[i].Addr, MipiCameraReg[i].Data);
+    }
 
-	    for(i=0;i<10;i++){
-	       OV8865_write_cmos_sensor_8(0x3809,i);
-	      usleep(100);
-	        printf("%d (%d)\n",OV8865_read_cmos_sensor_8(0x3809),i);
-	      usleep(100);
-	    }
-	 num = sizeof(MipiCameraReg)/sizeof(MipiCameraReg[0]);
-     for(i=0;i<num;i++){
+	oc_i2c_uninit((int)h2p_lw_mipi_camera);  // Release I2C bus , due to two I2C master shared!
 
-    	 if (MipiCameraReg[i].Type == TIME_DELAY)   usleep(MipiCameraReg[i].Data*100);
-    	 else if(MipiCameraReg[i].Type == END_OF_SCRIPT)   break;
-    	 else if(MipiCameraReg[i].Type == 0x6c)   OV8865_write_cmos_sensor_8(MipiCameraReg[i].Addr, MipiCameraReg[i].Data);
-     }
-
-
- 	oc_i2c_uninit((int)h2p_lw_mipi_camera);  // Release I2C bus , due to two I2C master shared!
-
-
-
-	 OV8865DB("\nEnd MipiCameraInit! -OV8865!\r\n\n");
-
+	OV8865DB("\nEnd MipiCameraInit! -OV8865!\r\n\n");
 }
 
 

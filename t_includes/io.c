@@ -1,5 +1,5 @@
 #include "terasic_includes.h"
-
+#include "stdint.h"
 void IOWR(void *base_address, int NumOfReg, uint32_t data){
 	base_address += NumOfReg*4;
 	*(uint32_t *)base_address = data;

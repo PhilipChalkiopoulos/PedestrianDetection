@@ -104,26 +104,12 @@ void MipiBridgeInit(void){
 
 	printf("Chip and Revision ID is 0x%04xh(expected: 0x4401);\n",data);
 
-
     num = sizeof(MipiBridgeReg)/sizeof(MipiBridgeReg[0]);
 
     for(i=0;i<num;i++){
    	 if (MipiBridgeReg[i].Addr == 0xFFFF)   usleep(MipiBridgeReg[i].Data*1000);
         else MipiBridgeRegWrite(MipiBridgeReg[i].Addr,  MipiBridgeReg[i].Data);
      }
-
-
-//    alt_u8 cap = 2; // 0- 3
-//    alt_u8 HsRxRs = 2;// 0-3
-//    alt_u8 ClkDly_clk = 0;
-//    alt_u8 ClkDly_data = 15;
-//
-//     MipiBridgeRegWrite(0x0056,((cap<<6) + (HsRxRs<<4) + ClkDly_clk));
-//     MipiBridgeRegWrite(0x0058,((cap<<6) + (HsRxRs<<4) + ClkDly_data));
-//     MipiBridgeRegWrite(0x005A,((cap<<6) + (HsRxRs<<4) + ClkDly_data));
-//     MipiBridgeRegWrite(0x005C,((cap<<6) + (HsRxRs<<4) + ClkDly_data));
-//     MipiBridgeRegWrite(0x005E,((cap<<6) + (HsRxRs<<4) + ClkDly_data));
-//
 
     printf("End MipiBridgeInit!\n\n");
 

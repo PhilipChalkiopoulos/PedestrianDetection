@@ -32,6 +32,13 @@
 #ifndef TERASIC_INCLUDES_H_
 #define TERASIC_INCLUDES_H_
 
+void *h2p_lw_mipi_camera;
+void *h2p_lw_mipi_contrlr;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include <stdio.h>
 #include <stdlib.h> // malloc, free
 #include <string.h>
@@ -57,7 +64,7 @@
 #include "I2C_core.h"
 #include "mipi_camera_config.h"
 #include "mipi_bridge_config.h"
-#include "auto_focus.h"
+
 //#include "io.h"
 #include "camera_func.h"
 
@@ -71,8 +78,9 @@
 #define TRUE    1
 #define FALSE   0
 
-void *h2p_lw_mipi_camera;
-void *h2p_lw_mipi_contrlr;
 //void *h2p_lw_i2c_cam_sens;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*TERASIC_INCLUDES_H_*/

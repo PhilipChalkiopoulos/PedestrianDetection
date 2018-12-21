@@ -12,8 +12,6 @@
 
 #define DEBUG_I2C
 
-
-
 bool oc_i2c_init(alt_32 i2c_base);
 bool  oc_i2c_init_ex(alt_32 i2c_base, alt_32 ref_clk, alt_32 i2c_clk);
 bool  oc_i2c_uninit(alt_32 i2c_base);
