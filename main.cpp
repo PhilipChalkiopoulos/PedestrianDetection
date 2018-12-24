@@ -16,6 +16,7 @@ using namespace std;
 using namespace cv;
 
 int fd;
+dev_fb fb;
 void *lw_axi_master = NULL;
 void *h2f_axi_master = NULL;
 
@@ -48,11 +49,7 @@ int64 ttdetect00, ttdetect11;
 uint8_t start_mix = 0x01;
 uint8_t stop_mix = 0x00;
 
-//void *reg, *reg_value;
-//TODO: delete HW_REGS_BASE
-#define HW_REGS_BASE ( ALT_LWFPGASLVS_OFST )
-#define HW_REGS_SPAN ( ALT_LWFPGASLVS_UB_ADDR - ALT_LWFPGASLVS_LB_ADDR + 1)
-
+#define HW_REGS_SPAN (ALT_LWFPGASLVS_UB_ADDR - ALT_LWFPGASLVS_LB_ADDR + 1)
 #define H2F_AXI_SPAN (ALT_FPGASLVS_UB_ADDR - ALT_FPGASLVS_LB_ADDR + 1)
 
 #define IORD(base, index)		(*( ((uint32_t *)base)+index))
@@ -62,19 +59,17 @@ uint8_t stop_mix = 0x00;
 void detectAndDisplay( Mat frame,dev_fb fb );
 void display_image(dev_fb fb, Mat image, int offset_x, int offset_y);
 void display_logo(String img, dev_fb fb );
+void display_mixer_layer(int layer, int offset_x, int offset_y);
 
 double scale = 1.2;
 const int gr_threshold = 2;
-double hit_threshold = 1.1;
+double hit_threshold = 1;
 
-Size win_size(64, 128);
 Size win_size_d(48, 96);
 Size win_stride(4, 4);
 Size padding(8,8);
 
-//cv::HOGDescriptor hog(win_size, Size(16,16), Size(16,16), Size(16,16), 9, 1 );
-
-cv::HOGDescriptor hog_d(Size(48, 96), Size(16, 16), Size(8, 8), Size(8, 8), 9);
+cv::HOGDescriptor hog_d(win_size_d, Size(16, 16), Size(8, 8), Size(8, 8), 9);
 
 uint32_t  temp2;
 uint32_t led_data = 0x0;
@@ -82,16 +77,16 @@ uint32_t led_data = 0x0;
 /** @function main */
 int main( int argc, const char** argv)
 {
-	dev_fb fb;
 	fb_init(&fb);
 
 	fb_fillScr(&fb,0,0,0);
 
+	pixel cursor=fb_toPixel(10,50);
+	fb_printStr(&fb, "Real Time Pedestrian Detection System with SoC FPGA\nImplemented by Philip Chalkiopoulos", &cursor, 20, 255,255,255);
+
 	display_logo("upatras.bmp", fb);
 
-	hog_d.winSize = Size(48, 96);
 	hog_d.setSVMDetector(hog_d.getDaimlerPeopleDetector());
-	cout << endl << "winSize of the hog_d Detector: " << hog_d.winSize << endl;
 
 	// map the address space for the Hardware Components registers into user space so
 	// we can interact with them.
@@ -102,7 +97,7 @@ int main( int argc, const char** argv)
 		return( 1 );
 	}
 
-	lw_axi_master = mmap( NULL, HW_REGS_SPAN, ( PROT_READ | PROT_WRITE ), MAP_SHARED, fd, HW_REGS_BASE );
+	lw_axi_master = mmap( NULL, HW_REGS_SPAN, ( PROT_READ | PROT_WRITE ), MAP_SHARED, fd, ALT_LWFPGASLVS_OFST );
 
 	if( lw_axi_master == MAP_FAILED ) {
 		printf( "ERROR: Lightweight H2F AXI Bridge mmap() failed...\n" );
@@ -150,9 +145,8 @@ int main( int argc, const char** argv)
 	cout << "\n* Enter the scale value [default: 1.2]: "; cin >> scale;
 	//cout << "\n* Enter the hit_threshold value [default :1.5]: "; cin >> hit_threshold;
 
-
+	//Disable Clipper Component. Actually stops the streaming
 	IOWR(lw_fpga_clp_addr,int(0),int(0x0));
-
 	usleep(20);
 	//Enable the Alpha Blending Mixer Component
 	IOWR(lw_fpga_mix_addr,0,0x01);
@@ -160,16 +154,7 @@ int main( int argc, const char** argv)
 
 	//Din1 x,y, enable
 
-	//Set x,y for the displayed Layer 1 of Mixer
-	IOWR(lw_fpga_mix_addr,2,0x022B); //555
-	usleep(20);
-	IOWR(lw_fpga_mix_addr,3,0x96); //200
-	usleep(20);
-
-	//Display Layer 1 of Mixer
-	IOWR(lw_fpga_mix_addr,4,0x01);
-	usleep(20);
-
+	display_mixer_layer(1, 555, 150);
 
 	IOWR(lw_fpga_mipi_pwdn_n, 0x00, 0x00);
 	IOWR(lw_fpga_mipi_rest_n, 0x00, 0x00);
@@ -178,7 +163,6 @@ int main( int argc, const char** argv)
 	IOWR(lw_fpga_mipi_pwdn_n, 0x00, 0xFF);
 	usleep(200);
 	IOWR(lw_fpga_mipi_rest_n, 0x00, 0xFF);
-
 	usleep(200);
 
 	// MIPI Init
@@ -189,8 +173,8 @@ int main( int argc, const char** argv)
 		MIPI_BIN_LEVEL(3);
 	}
 
+	//Enable Clipper Component.
 	IOWR(lw_fpga_clp_addr,int(0),int(0x01));
-
 	usleep(10);
 
 	alt_u16 focus_value=0; //0-1023
@@ -203,26 +187,25 @@ int main( int argc, const char** argv)
 
 
 	//---------Set the Mat Array for the frame to detect --------//
-
 	uchar image_array[RES_X*RES_Y];
 	Mat img = Mat(RES_Y, RES_X, CV_8UC1, &image_array);
-	printf( "Mat Array initialized...\n" );
 
 	//TODO: check this
 	//*image_array = *(uint8_t *)onchip_ram;
 
+
+	//pedestrian detection iterations TODO: Change to while(1);
 	int iterations;
 	cout << "\n* Enter the preferred detect iterations: "; cin >> iterations;
 
-	for (a=0;a<iterations;a++){ //pedestrian detect iterations TODO: Change to while 1;
-		// calculate timings
+	for (a=0;a<iterations;a++){
 		if (led_data == 0){
 			led_data = 0x200;
 		}else{
 			led_data = (led_data >> 1);
 		}
 		IOWR(lw_fpga_led_addr,int(0),int(led_data));
-
+		// calculate timings
 		t0 = cv::getTickCount();
 
 		for (j=0; j<RES_Y; j++){
@@ -247,22 +230,20 @@ int main( int argc, const char** argv)
 		ttdetect = cv::getTickCount();
 
 	}
-	//-----------------------------------------------5-11-18---------------------------
+
 	double det_secs = (ttdetect-t0)/cv::getTickFrequency();
 	double read_secs = (ttread - t0)/cv::getTickFrequency();
 	double conv_secs = (ttconvert1 - ttconvert0)/cv::getTickFrequency();
-	double multiscale_sec = (ttdetect1 - ttdetect0)/cv::getTickFrequency();
+
 	double multiscale_sec_d = (ttdetect11 - ttdetect00)/cv::getTickFrequency();
 	double show_sec = (ttshow1 - ttshow0)/cv::getTickFrequency();
 
-	cout << "\nHog Detection performed in: " << det_secs << " seconds\n";
-	cout << "\nReading process performed in: " << read_secs << " seconds\n";
-	cout << "\nConvert Gray2RGB performed in: " << conv_secs << " seconds\n";
-	cout << "\nDetect Multiscale performed in: " << multiscale_sec << " seconds\n";
-	cout << "\nDetect Multiscale with daimler performed in: " << multiscale_sec_d << " seconds\n";
-	cout << "\nShow image process performed in: " << show_sec << " seconds\n";
+	cout << "\nHog Detection performed in: " << det_secs*1000 << " Milliseconds\n";
+	cout << "\nReading process performed in: " << read_secs*1000 << " Milliseconds\n";
+	cout << "\nConvert Gray2RGB performed in: " << conv_secs*1000 << " Milliseconds\n";
 
-	//-----------------------------------------------5-11-18---------------------------
+	cout << "\nDetect Multiscale with daimler performed in: " << multiscale_sec_d*1000 << " Milliseconds\n";
+	cout << "\nShow image process performed in: " << show_sec*1000 << " Milliseconds\n";
 
 	fb_close(&fb);
 	if (munmap (lw_axi_master, HW_REGS_SPAN) != 0)
@@ -277,85 +258,8 @@ int main( int argc, const char** argv)
 	}
 	close(fd);
 
-
-	//-----------------------------------------------30-04-18---------------------------
-    return 0;
+	return 0;
 }
-
-
-void detectAndDisplay( Mat frame_gray, dev_fb fb )
-{
-    std::vector<Rect> rects_d;
-    Mat frame_d;
-
-    ttconvert0  = cv::getTickCount();
-    cvtColor(frame_gray,frame_d,COLOR_GRAY2BGR);
-    ttconvert1  = cv::getTickCount();
-
-    ttdetect00  = cv::getTickCount();
-    hog_d.detectMultiScale(frame_gray, rects_d, hit_threshold, win_stride, padding, scale, gr_threshold);
-    for (size_t i = 0; i < rects_d.size(); i++){
-    	rectangle(frame_d, rects_d[i], CV_RGB(0, 255, 0), 1);
-    }
-    ttdetect11  = cv::getTickCount();
-
-    ttshow0 = cv::getTickCount();
-
-    int channels = frame_d.channels();
-    int nRows = frame_d.rows;
-	int nCols = frame_d.cols * channels;
-    int i,j,x,y;
-	uchar r,g,b;
-
-	for( i = 0; i < nRows; ++i)
-	{
-		for ( j = 0; j < nCols; j=j+3)
-		{
-			x = i ;
-			y = j/3 ;
-
-			r = frame_d.at<char>(i,j);
-			g = frame_d.at<char>(i,j+1);
-			b = frame_d.at<char>(i,j+2);
-
-			fb_drawPixel(&fb,y+150,x+150,b,g,r); //if we want offset of the image x+ y+
-		}
-	}
-	ttshow1 = cv::getTickCount();
-}
-
-
-void display_logo(String img, dev_fb fb ){
-
-	Mat image;
-	image = imread(img, CV_LOAD_IMAGE_COLOR);   // Read the file
-
-	if(! image.data )                              // Check for invalid input
-	{
-		cout <<  "Could not open or find the image" << std::endl ;
-	}
-
-	int channels = image.channels();
-	int nRows = image.rows;
-	int nCols = image.cols * channels;
-	int i,j,x,y;
-	uchar r,g,b;
-	for( i = 0; i < nRows; ++i)
-	{
-		for ( j = 0; j < nCols; j=j+3)
-		{
-			x = i ;
-			y = j/3 ;
-
-			r = image.at<char>(i,j);
-			g = image.at<char>(i,j+1);
-			b = image.at<char>(i,j+2);
-			//if we want offset of the image x+ y+
-			fb_drawPixel(&fb,y+106,x+450,b,g,r);
-		}
-	}
-}
-
 
 void display_image(dev_fb fb, Mat image, int offset_x, int offset_y){
 	int channels = image.channels();
@@ -374,7 +278,59 @@ void display_image(dev_fb fb, Mat image, int offset_x, int offset_y){
 			g = image.at<char>(i,j+1);
 			b = image.at<char>(i,j+2);
 			//if we want offset of the image x+ y+
-			fb_drawPixel(&fb,y+offset_y,x+offset_x,b,g,r);
+			fb_drawPixel(&fb,y + offset_y,x + offset_x,b,g,r);
 		}
 	}
+}
+
+void detectAndDisplay( Mat frame_gray, dev_fb fb )
+{
+    std::vector<Rect> rects_d;
+    Mat frame_d;
+
+    ttconvert0  = cv::getTickCount();
+    cvtColor(frame_gray,frame_d,COLOR_GRAY2BGR);
+    ttconvert1  = cv::getTickCount();
+
+    ttdetect00  = cv::getTickCount();
+    hog_d.detectMultiScale(frame_gray, rects_d, hit_threshold, win_stride, padding, scale, gr_threshold);
+    for (size_t i = 0; i < rects_d.size(); i++){
+    	rectangle(frame_d, rects_d[i], CV_RGB(0, 255, 0), 1);
+    }
+    ttdetect11  = cv::getTickCount();
+
+    ttshow0 = cv::getTickCount();
+    display_image(fb, frame_d, 150, 150);
+	ttshow1 = cv::getTickCount();
+}
+
+
+void display_logo(String img, dev_fb fb ){
+
+	Mat image;
+	image = imread(img, CV_LOAD_IMAGE_COLOR);   // Read the file
+
+	if(! image.data )                              // Check for invalid input
+	{
+		cout <<  "Could not open or find the image" << std::endl ;
+	}
+	display_image(fb, image, 450, 106);
+}
+
+void display_mixer_layer(int layer, int offset_x, int offset_y){
+	if (layer < 1 || layer >12) layer = 1;
+	if (offset_x < 0 || offset_x >1024-321) offset_x = 0;
+	if (offset_y < 0 || offset_y >768-241) offset_y = 0;
+	int x_register = (layer-1)*3 + 2;
+	int y_register = (layer-1)*3 + 3;
+	int display_register = (layer-1)*3 + 4;
+	//Set x,y for the displayed Layer 1 of Mixer
+	IOWR(lw_fpga_mix_addr,x_register,offset_x); //555 0x022B
+	usleep(20);
+	IOWR(lw_fpga_mix_addr,y_register,offset_y); //200 0x96
+	usleep(20);
+
+	//Display Layer 1 of Mixer
+	IOWR(lw_fpga_mix_addr,display_register,0x01);
+	usleep(20);
 }

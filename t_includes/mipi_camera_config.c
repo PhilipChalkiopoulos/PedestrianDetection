@@ -550,7 +550,7 @@ void MipiCameraInit(void)
 	bSuccess = oc_i2c_init_ex((int)h2p_lw_mipi_camera, 50*1000*1000,400*1000); //I2C: 400K
 	if (!bSuccess) printf("failed to init MIPI- Camera i2c\r\n");
 
-	OV8865DB("\nbase address of camera module :");
+	/*OV8865DB("\nbase address of camera module :");
 	OV8865DB(h2p_lw_mipi_camera);
 
 	OV8865DB("\nStart MipiCameraInit -OV8865!\r\n");
@@ -562,7 +562,7 @@ void MipiCameraInit(void)
 		printf("%d (%d)\n",OV8865_read_cmos_sensor_8(0x3809),i);
 		usleep(100);
 	}
-
+*/
 	num = sizeof(MipiCameraReg)/sizeof(MipiCameraReg[0]);
 	for(i=0;i<num;i++){
 		if (MipiCameraReg[i].Type == TIME_DELAY)   usleep(MipiCameraReg[i].Data*100);
